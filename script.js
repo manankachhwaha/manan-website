@@ -511,9 +511,9 @@ function fluidUpdate(l, s, v, dt) {
   // idle: a slow drip every second or two so it's never still
   fl.auto -= dt;
   if (fl.auto <= 0) {
-    fl.auto = 1 + Math.random() * 1.4;
+    fl.auto = 1.6 + Math.random() * 1.6;
     const a = Math.random() * Math.PI * 2;
-    Fluid.splat(.2 + Math.random() * .6, .2 + Math.random() * .6, Math.cos(a) * 450, Math.sin(a) * 450, fl.color.map(c => c * 1.8));
+    Fluid.splat(.2 + Math.random() * .6, .2 + Math.random() * .6, Math.cos(a) * 450, Math.sin(a) * 450, fl.color.map(c => c * 1.4));
   }
   Fluid.step(Math.min(dt, 1 / 20));
   Fluid.render();

@@ -9,7 +9,7 @@ const Fluid = (() => {
   const cfg = {
     SIM: small ? 64 : 128,
     DYE: small ? 256 : 640,
-    DENSITY_DISSIPATION: .9,
+    DENSITY_DISSIPATION: 1.5,   // how fast ink fades (higher = never floods)
     VELOCITY_DISSIPATION: .25,
     PRESSURE: .8,
     ITER: small ? 8 : 18,
@@ -88,7 +88,7 @@ const Fluid = (() => {
       void main() {
         vec3 c = 1. - exp(-texture(uTex, vUv).rgb * 2.2);   // soft tone-map, no blow-outs
         float a = max(c.r, max(c.g, c.b));
-        o = vec4(c, a);                                     // premultiplied alpha
+        o = vec4(c, a) * .9;                                // premultiplied alpha, slightly see-through
       }`,
   };
 
