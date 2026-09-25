@@ -89,6 +89,7 @@ a { color: inherit; text-decoration: none; }
       rgba(0,0,0,0) 10vw);
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
           mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  will-change: opacity;
 }
 /* darkens a sheet as the next one covers it */
 .shade {
@@ -98,6 +99,7 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
   background: #05040c;
   opacity: 0;
+  will-change: opacity;  /* fade on the GPU, no repaint */
 }
 
 /* ================= INTRO ================= */
@@ -592,8 +594,22 @@ a { color: inherit; text-decoration: none; }
 .foot { position: absolute; left: 0; right: 0; bottom: 22px; font-size: .8rem; opacity: .5; padding: 0 16px; }
 
 /* ================= PHONES ================= */
+/* the phone version of the cloth edge (see script.js) */
+.cap {
+  position: fixed; top: 0; left: -2px; right: -2px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform-origin: 50% 100%;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
 @media (hover: none), (pointer: coarse) {
-  .grain { display: none; } /* big animated overlay, not worth it on phones */
+  .grain { display: none; }                         /* big animated overlay */
+  .content { will-change: auto; }                   /* not transformed on phones: no extra GPU layer */
+  .split, .row, .words, .g-head h2, .orbit-title, .tunnel-text, .wave { text-shadow: none; }
+  .goo { filter: none; }                            /* blur filter repaints every frame */
+  .drop { display: none; }
+  .goo-core { background: var(--orange); }
 }
 @media (max-width: 600px) {
   .dots button::before { content: ''; position: absolute; inset: -8px; } /* bigger tap target */

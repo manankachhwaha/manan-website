@@ -7,12 +7,12 @@
 const Fluid = (() => {
   const small = matchMedia('(max-width: 700px), (pointer: coarse)').matches;
   const cfg = {
-    SIM: small ? 96 : 128,
-    DYE: small ? 384 : 640,
+    SIM: small ? 64 : 128,
+    DYE: small ? 256 : 640,
     DENSITY_DISSIPATION: .9,
     VELOCITY_DISSIPATION: .25,
     PRESSURE: .8,
-    ITER: small ? 12 : 18,
+    ITER: small ? 8 : 18,
     CURL: 26,
     RADIUS: .22,
   };
@@ -168,7 +168,7 @@ const Fluid = (() => {
 
   function resize() {
     if (!ok) return;
-    const dpr = Math.min(small ? 1 : 1.5, devicePixelRatio || 1);
+    const dpr = (small ? .6 : Math.min(1.5, devicePixelRatio || 1));
     const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
     const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
     if (canvas.width === w && canvas.height === h) return;

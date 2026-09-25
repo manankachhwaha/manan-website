@@ -15,7 +15,8 @@ const easeInOut = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 // Motion is on by default (this site is all about it); the corner toggle turns it off.
 let reduceMotion = false;
 // Phones/tablets: no scroll smoothing (the finger must stay glued to the page)
-const isTouch = matchMedia('(hover: none), (pointer: coarse)').matches;
+// (add ?lite to the URL to preview the phone version on a computer)
+const isTouch = matchMedia('(hover: none), (pointer: coarse)').matches || /[?&]lite/.test(location.search);
 const PALETTE = ['#ff5b3a', '#ffd23f', '#ff7ad9', '#4fffb0', '#f4efe6'];
 
 // Only touch the DOM when a value actually changed
@@ -303,7 +304,7 @@ modules.particles = {
   },
   layout() {
     const w = S.vw, h = S.vh;
-    const dpr = (this.dpr = Math.min(isTouch ? 1.5 : 2, devicePixelRatio || 1));
+    const dpr = (this.dpr = Math.min(isTouch ? 1 : 2, devicePixelRatio || 1));
     this.cv.width = w * dpr;
     this.cv.height = h * dpr;
 
@@ -324,7 +325,7 @@ modules.particles = {
     for (let y = 0; y < h; y += gap)
       for (let x = 0; x < w; x += gap)
         if (data[(y * w + x) * 4 + 3] > 128) pts.push([x, y]);
-    const MAX = w < 700 ? 1200 : 3200;
+    const MAX = isTouch ? 700 : 3200;
     if (pts.length > MAX) {
       const stride = pts.length / MAX;
       pts = Array.from({ length: MAX }, (_, i) => pts[Math.floor(i * stride)]);
@@ -392,7 +393,7 @@ modules.tunnel = {
     this.spin = 0;
   },
   layout() {
-    this.dpr = Math.min(isTouch ? 1.5 : 2, devicePixelRatio || 1);
+    this.dpr = Math.min(isTouch ? 1 : 2, devicePixelRatio || 1);
     this.cv.width = S.vw * this.dpr;
     this.cv.height = S.vh * this.dpr;
     this.size = Math.max(S.vw, S.vh) * .7;
@@ -457,6 +458,19 @@ modules.contact = {
 
 layers.forEach(l => modules[l.id]?.init?.(l));
 
+/* Phones: the cloth edge is a curved "cap" in the next sheet's colour that the GPU just
+   moves and stretches, instead of re-clipping (= repainting) a whole screen every frame */
+if (isTouch) {
+  layers.forEach((l, i) => {
+    if (!i) return;
+    const c = document.createElement('div');
+    c.className = 'cap';
+    c.style.background = l.dataset.edge || '#000';
+    $('#stage').appendChild(c);
+    l._cap = c;
+  });
+}
+
 /* ---------------- fluid ink (lives behind the hero and the contact section) ---------------- */
 const fluidCv = $('.fluid');
 const fluidOn = Fluid.init(fluidCv);
@@ -468,6 +482,10 @@ function fluidUpdate(l, s, v, dt) {
   if (!fluidOn || reduceMotion) return;
   fl.activeNow = true;
   if (fl.home !== l) { l._sheet.insertBefore(fluidCv, l._content); fl.home = l; Fluid.resize(); }
+  // phones: simulate every other frame (soft ink looks the same at 30fps, costs half)
+  fl.acc = (fl.acc || 0) + dt;
+  if (isTouch && (fl.flip = !fl.flip)) return;
+  dt = fl.acc; fl.acc = 0;
   fl.ct -= dt;
   if (fl.ct <= 0) { fl.ct = .6; fl.color = FLUID_COLORS[(Math.random() * FLUID_COLORS.length) | 0]; }
 
@@ -492,7 +510,7 @@ function fluidUpdate(l, s, v, dt) {
     const a = Math.random() * Math.PI * 2;
     Fluid.splat(.2 + Math.random() * .6, .2 + Math.random() * .6, Math.cos(a) * 450, Math.sin(a) * 450, fl.color.map(c => c * 1.8));
   }
-  Fluid.step(Math.min(dt, 1 / 30));
+  Fluid.step(Math.min(dt, 1 / 20));
   Fluid.render();
 }
 
@@ -507,6 +525,11 @@ function layout() {
     l._hold = parseFloat(l.dataset.hold || .5) * S.vh;
     s += l._enter + l._hold;
     l.style.zIndex = i + 1;
+    if (l._cap) {
+      l._capH = S.vh * .3;
+      l._cap.style.height = l._capH + 'px';
+      l._cap.style.zIndex = i + 1;
+    }
   });
   S.max = s;
   spacer.style.height = s + S.vh + 'px';
@@ -539,7 +562,7 @@ addEventListener('pointermove', e => {
 const fx = { cv: $('.fx'), trail: [], sparks: [], rings: [], lx: 0, ly: 0, clean: true };
 fx.ctx = fx.cv.getContext('2d');
 function fxResize() {
-  fx.dpr = Math.min(isTouch ? 1.5 : 2, devicePixelRatio || 1);
+  fx.dpr = Math.min(isTouch ? 1 : 2, devicePixelRatio || 1);
   fx.cv.width = S.vw * fx.dpr;
   fx.cv.height = S.vh * fx.dpr;
   fx.clean = false;
@@ -685,7 +708,8 @@ function frame(now) {
   const v = clamp(S.vel, -300, 300);
 
   // pink/cyan colour split on big headings while scrolling fast
-  const split = clamp(v * .035, -9, 9);
+  // (desktop only: on phones this restyles the whole page every frame)
+  const split = isTouch ? 0 : clamp(v * .035, -9, 9);
   if (Math.abs(split - S.split) > .15 || (split === 0 && S.split !== 0)) {
     S.split = split;
     document.documentElement.style.setProperty('--split', split.toFixed(2) + 'px');
@@ -708,7 +732,10 @@ function frame(now) {
 
     const visible = s.enter > 0 && cover < 1;
     if (visible !== l._vis) { l.style.visibility = visible ? 'visible' : 'hidden'; l._vis = visible; }
-    if (!visible) return;
+    if (!visible) {
+      if (l._cap) setStyle(l._cap, 'visibility', 'hidden');
+      return;
+    }
 
     // slide the sheet up
     s.offsetY = (1 - s.enter) * vh;
@@ -720,6 +747,12 @@ function frame(now) {
       const landing = Math.min(1, (1 - s.enter) * 5); // flatten as it settles
       let b = Math.sin(s.enter * Math.PI) * vh * .09 + v * .55 * landing;
       b = clamp(b, -vh * .2, vh * .26);
+      bulge = Math.abs(b) / (vh * .12);
+      if (isTouch) {
+        const k = clamp(b / l._capH, 0, 1);
+        setStyle(l._cap, 'visibility', k > .005 ? 'visible' : 'hidden');
+        setStyle(l._cap, 'transform', `translate3d(0,${(s.offsetY - l._capH + 1).toFixed(1)}px,0) scaleY(${k.toFixed(3)})`);
+      } else {
       // ripples running along the edge, stronger the faster you scroll
       const amp = Math.min(vh * .045, Math.abs(v) * .12 + Math.sin(s.enter * Math.PI) * vh * .012) * landing;
       const SEG = vw < 700 ? 20 : 36;
@@ -732,10 +765,10 @@ function frame(now) {
       }
       l.style.clipPath = `path('${d} L${vw},${vh} L0,${vh} Z')`;
       l._clipped = true;
-      bulge = Math.abs(b) / (vh * .12);
-    } else if (l._clipped) {
-      l.style.clipPath = '';
-      l._clipped = false;
+      }
+    } else {
+      if (l._clipped) { l.style.clipPath = ''; l._clipped = false; }
+      if (l._cap) setStyle(l._cap, 'visibility', 'hidden');
     }
 
     // the sheet underneath gets pushed back and darkened
@@ -744,14 +777,16 @@ function frame(now) {
       : 'none');
     setStyle(l._shade, 'opacity', (cover * .75).toFixed(2));
 
-    // fabric stretch + folds on every scroll
-    const k = s.enter < 1 ? .6 : 1;
-    setStyle(l._content, 'transformOrigin', v >= 0 ? '50% 0%' : '50% 100%');
-    setStyle(l._content, 'transform',
-      `perspective(1400px) rotateX(${(-v * .03 * k).toFixed(2)}deg) skewY(${(v * .01 * k).toFixed(2)}deg) scaleY(${(1 + Math.abs(v) * .0006 * k).toFixed(3)})`);
-    const dop = clamp(Math.max(bulge, Math.abs(v) / 140), 0, 1) * .9;
+    // fabric stretch + folds on every scroll (desktop; phones keep only the fold shading)
+    if (!isTouch) {
+      const k = s.enter < 1 ? .6 : 1;
+      setStyle(l._content, 'transformOrigin', v >= 0 ? '50% 0%' : '50% 100%');
+      setStyle(l._content, 'transform',
+        `perspective(1400px) rotateX(${(-v * .03 * k).toFixed(2)}deg) skewY(${(v * .01 * k).toFixed(2)}deg) scaleY(${(1 + Math.abs(v) * .0006 * k).toFixed(3)})`);
+    }
+    const dop = isTouch ? 0 : clamp(Math.max(bulge, Math.abs(v) / 140), 0, 1) * .9;
     setStyle(l._drape, 'opacity', dop.toFixed(2));
-    if (dop > .01) l._drape.style.backgroundPosition = `0 0, ${(S.time * 30 + y * .2).toFixed(0)}px 0`;
+    if (dop > .01 && !isTouch) l._drape.style.backgroundPosition = `0 0, ${(S.time * 30 + y * .2).toFixed(0)}px 0`;
 
     modules[l.id]?.update?.(l, s, v);
     if (l.id === 'hero' || l.id === 'contact') fluidUpdate(l, s, v, dt);
