@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manan — Scroll Playground</title>
+  <meta name="description" content="A playful, animated personal site. Scroll to pull the cloth.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='42' fill='%23ff5b3a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Intro curtain -->
+  <div class="intro" aria-hidden="true"><span>hello ✦</span></div>
+
+  <!-- Global UI -->
+  <div class="progress" aria-hidden="true"><span></span></div>
+  <nav class="dots" aria-label="Sections"></nav>
+  <button class="motion-toggle" aria-pressed="false">Motion: on</button>
+  <div class="cursor" aria-hidden="true"></div>
+  <div class="cursor-dot" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <canvas class="fx" aria-hidden="true"></canvas>
+
+  <!--
+    Each .layer is a full-screen "sheet". While you scroll, the next sheet is pulled up
+    over the current one like cloth. data-hold = how long (in screen heights) the sheet
+    stays pinned so its own animation can play.
+  -->
+  <main id="stage">
+
+    <!-- 1. HERO -->
+    <section class="layer" id="hero" data-hold="0.8" data-name="Hello">
+      <div class="sheet">
+        <div class="blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+        <canvas class="fluid" aria-hidden="true"></canvas>
+        <div class="content">
+          <p class="eyebrow">Hi there, I'm</p>
+          <h1 class="split">Manan</h1>
+          <p class="rotator">I make things that <span class="rot-word">move</span></p>
+          <div class="scroll-cue"><span>scroll</span><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MARQUEE -->
+    <section class="layer" id="marquee" data-hold="0.7" data-name="Feel">
+      <div class="sheet">
+        <div class="content">
+          <div class="row" data-dir="1"><div class="track">SCROLL ✦ FEEL ✦ PLAY ✦ </div></div>
+          <div class="row band" data-dir="-1"><div class="track">MOTION ● COLOR ● WONDER ● </div></div>
+          <div class="row outline" data-dir="1"><div class="track">PULL THE CLOTH ✺ </div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MANIFESTO (words light up) -->
+    <section class="layer" id="manifesto" data-hold="1.6" data-name="About">
+      <div class="sheet">
+        <div class="content">
+          <p class="label">( about me )</p>
+          <p class="words">I believe the web should feel *alive.* Every scroll is a gesture, every pixel a tiny *performance.* I build playful, tactile things that people want to *touch* twice.</p>
+          <svg class="badge" viewBox="0 0 200 200" aria-hidden="true">
+            <defs><path id="circ" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs>
+            <text><textPath href="#circ">scroll to feel ✦ scroll to feel ✦ scroll to feel ✦</textPath></text>
+            <circle cx="100" cy="100" r="12"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. HORIZONTAL GALLERY -->
+    <section class="layer" id="gallery" data-hold="2.4" data-name="Work">
+      <div class="sheet">
+        <div class="content">
+          <header class="g-head">
+            <p class="label">( selected play )</p>
+            <h2>Things I've made</h2>
+          </header>
+          <div class="g-track">
+            <article class="card" style="--c1:#ff7ad9;--c2:#2b1bff"><div class="art art-1"></div><div class="meta"><span>01</span><h3>Aurora</h3><p>Generative light study</p></div></article>
+            <article class="card" style="--c1:#ff5b3a;--c2:#ffd23f"><div class="art art-2"></div><div class="meta"><span>02</span><h3>Stripe Theory</h3><p>Motion poster series</p></div></article>
+            <article class="card" style="--c1:#4fffb0;--c2:#0d0b1e"><div class="art art-3"></div><div class="meta"><span>03</span><h3>Polka</h3><p>Interactive pattern toy</p></div></article>
+            <article class="card" style="--c1:#2b1bff;--c2:#ff7ad9"><div class="art art-4"></div><div class="meta"><span>04</span><h3>Ripple</h3><p>Sound-reactive visuals</p></div></article>
+            <article class="card" style="--c1:#ff5b3a;--c2:#ffd23f"><div class="art art-5"></div><div class="meta"><span>05</span><h3>Blobby</h3><p>Morphing brand identity</p></div></article>
+            <article class="card" style="--c1:#0d0b1e;--c2:#4fffb0"><div class="art art-6"></div><div class="meta"><span>06</span><h3>Prism</h3><p>3D type experiment</p></div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 3D ORBIT -->
+    <section class="layer" id="orbit" data-hold="1.4" data-name="Loves">
+      <div class="sheet">
+        <div class="content">
+          <div class="ring" data-items="Design,Code,Music,Coffee,Travel,Film,Typography,Color,Games,Books,Night walks,Sunsets">
+            <h2 class="orbit-title">things<br>I love</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. PARTICLES -->
+    <section class="layer" id="particles" data-hold="1.4" data-name="Dust">
+      <div class="sheet">
+        <div class="content">
+          <canvas data-text="MANAN"></canvas>
+          <p class="label p-caption">( scattered pieces, coming together )</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. TUNNEL -->
+    <section class="layer" id="tunnel" data-hold="1.4" data-name="Deeper">
+      <div class="sheet">
+        <div class="content">
+          <canvas class="rings"></canvas>
+          <h2 class="tunnel-text">going deeper</h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. CONTACT -->
+    <section class="layer" id="contact" data-hold="0.3" data-name="Contact">
+      <div class="sheet">
+        <div class="aurora"></div>
+        <div class="content">
+          <p class="label">( that's the end — or the start )</p>
+          <h2 class="wave">Let's make something move.</h2>
+          <a class="magnet" href="https://wa.me/918769643836" target="_blank" rel="noopener"><span class="goo" aria-hidden="true"><i class="goo-core"></i><i class="drop" style="--k:0"></i><i class="drop" style="--k:1"></i><i class="drop" style="--k:2"></i><i class="drop" style="--k:3"></i><i class="drop" style="--k:4"></i></span><span class="lab">Say hello</span></a>
+          <ul class="socials">
+            <li><a href="https://www.instagram.com/manan_kachhwaha/" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="https://www.linkedin.com/in/manankachhwaha/" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li><a href="https://wa.me/918769643836" target="_blank" rel="noopener">WhatsApp</a></li>
+          </ul>
+          <p class="foot">© Manan — made with way too many animations</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Gives the page its real scroll height -->
+  <div id="spacer"></div>
+
+  <!-- "goo" filter: blurred shapes + sharp alpha threshold = blobs that melt together like liquid -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="goo"/>
+        <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <script src="fluid.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
