@@ -38,12 +38,14 @@ const measureVh = () => vhProbe.offsetHeight || innerHeight;
 function splitText(el) {
   const text = el.textContent.trim();
   el.textContent = '';
-  el.setAttribute('aria-label', text);
+  el.setAttribute('aria-label', text.replace(/\*/g, ''));
   const chars = [];
   let i = 0;
   text.split(/\s+/).forEach((word, wi, arr) => {
     const w = document.createElement('span');
     w.className = 'word';
+    // *word* = italic serif accent
+    if (word.includes('*')) { w.classList.add('em'); word = word.replace(/\*/g, ''); }
     w.setAttribute('aria-hidden', 'true');
     for (const ch of word) {
       const c = document.createElement('span');
@@ -85,8 +87,11 @@ function scramble(el) {
   el._raf = requestAnimationFrame(tick);
 }
 
+/* .mask headings slide up from behind an invisible edge when their sheet arrives */
+$$('.mask').forEach(el => { el.innerHTML = `<span class="mask-in">${el.innerHTML}</span>`; });
+
 layers.forEach(l => {
-  l._labels = $$('.label', l);
+  l._labels = $$('.label:not(.mask)', l);
   l._sheet = $('.sheet', l);
   l._content = $('.content', l);
   l._sheet.insertAdjacentHTML('beforeend', '<div class="drape"></div><div class="shade"></div>');
@@ -166,7 +171,7 @@ modules.marquee = {
     this.sign = 1;
     this.rows = $$('.row', l).map(row => {
       const track = $('.track', row);
-      return { track, txt: track.textContent, dir: +row.dataset.dir || 1, off: 0, unit: 1 };
+      return { track, html: track.innerHTML, dir: +row.dataset.dir || 1, off: 0, unit: 1 };
     });
   },
   layout() {
@@ -174,7 +179,7 @@ modules.marquee = {
       r.track.textContent = '';
       const u = document.createElement('span');
       u.className = 'unit';
-      u.textContent = r.txt;
+      u.innerHTML = r.html;
       r.track.appendChild(u);
       r.unit = u.offsetWidth || 1;
       const n = Math.ceil((S.vw * 1.5) / r.unit) + 1;
@@ -569,28 +574,24 @@ function fxResize() {
 }
 fxResize();
 
-// "click" (not pointerdown) so a finger starting a scroll doesn't fire confetti
+// click = a quiet double ripple (and an ink burst when you're over the fluid)
+// ("click", not pointerdown, so a finger starting a scroll doesn't trigger it)
 addEventListener('click', e => {
   if (reduceMotion || e.detail === 0 || e.target.closest?.('.motion-toggle')) return;
-  const n = isTouch ? 24 : 36;
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2, sp = 250 + Math.random() * 550;
-    fx.sparks.push({
-      x: e.clientX, y: e.clientY,
-      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 250,
-      life: 1 + Math.random() * .4,
-      c: PALETTE[i % PALETTE.length],
-      s: 6 + Math.random() * 8,
-      rot: Math.random() * 6, vr: (Math.random() - .5) * 20,
-    });
+  fx.rings.push({ x: e.clientX, y: e.clientY, t: 0 }, { x: e.clientX, y: e.clientY, t: -.12 });
+  if (fluidOn && fl.home && fl.home._vis) {
+    const x = e.clientX / S.vw, y = 1 - e.clientY / S.vh;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      Fluid.splat(x, y, Math.cos(a) * 900, Math.sin(a) * 900, FLUID_COLORS[i % FLUID_COLORS.length].map(c => c * 2));
+    }
   }
-  fx.rings.push({ x: e.clientX, y: e.clientY, t: 0 });
 });
 
 function drawFx(dt) {
   if (reduceMotion) fx.trail.length = fx.sparks.length = fx.rings.length = 0;
 
-  // rainbow ribbon behind the cursor
+  // a fine ink line behind the cursor (drawn white; the canvas inverts it against whatever is below)
   // (skipped over the fluid sections, where the ink itself is the trail)
   if (!reduceMotion && !fl.activeNow && mouse.isMouse && (mouse.x !== fx.lx || mouse.y !== fx.ly)) {
     fx.trail.push({ x: mouse.x, y: mouse.y, life: 1 });
@@ -604,48 +605,56 @@ function drawFx(dt) {
   fx.clean = empty;
   if (empty) return;
 
-  for (const p of fx.trail) p.life -= dt * 2.4;
+  for (const p of fx.trail) p.life -= dt * 2.2;
   fx.trail = fx.trail.filter(p => p.life > 0).slice(-40);
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   for (let i = 1; i < fx.trail.length; i++) {
     const a = fx.trail[i - 1], b = fx.trail[i];
-    ctx.strokeStyle = `hsla(${((S.time * 90 + i * 9) % 360).toFixed(0)},100%,62%,${(b.life * .9).toFixed(2)})`;
-    ctx.lineWidth = b.life * 10;
+    ctx.strokeStyle = `rgba(255,255,255,${(b.life * .85).toFixed(2)})`;
+    ctx.lineWidth = .5 + b.life * 2;
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
   }
 
-  // shockwave rings
+  // ripple rings
   for (const r of fx.rings) r.t += dt;
-  fx.rings = fx.rings.filter(r => r.t < .7);
+  fx.rings = fx.rings.filter(r => r.t < .9);
   for (const r of fx.rings) {
-    const k = r.t / .7;
+    if (r.t < 0) continue;
+    const k = r.t / .9;
     ctx.strokeStyle = `rgba(255,255,255,${(1 - k).toFixed(2)})`;
-    ctx.lineWidth = 2.5 * (1 - k) + .5;
-    ctx.beginPath(); ctx.arc(r.x, r.y, 10 + easeOut(k) * 100, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(r.x, r.y, 6 + easeOut(k) * 70, 0, Math.PI * 2); ctx.stroke();
   }
-
-  // confetti
-  for (const p of fx.sparks) {
-    p.vy += 900 * dt; p.vx *= .985;
-    p.x += p.vx * dt; p.y += p.vy * dt;
-    p.rot += p.vr * dt; p.life -= dt * 1.1;
-  }
-  fx.sparks = fx.sparks.filter(p => p.life > 0 && p.y < S.vh + 40);
-  for (const p of fx.sparks) {
-    ctx.globalAlpha = Math.min(1, p.life);
-    ctx.fillStyle = p.c;
-    ctx.setTransform(fx.dpr, 0, 0, fx.dpr, 0, 0);
-    ctx.translate(p.x, p.y); ctx.rotate(p.rot);
-    ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
-  }
-  ctx.globalAlpha = 1;
 }
 
+/* cursor: grows over links, becomes a "View" bubble over project cards */
 if (!isTouch) {
+  const cursorLabel = document.createElement('span');
+  cursorLabel.className = 'cl';
+  cursor.appendChild(cursorLabel);
   document.addEventListener('mouseover', e => {
-    cursor.classList.toggle('big', !!e.target.closest('a, button, .card, .char'));
+    const card = e.target.closest('.card');
+    cursorLabel.textContent = card ? 'View' : '';
+    cursor.classList.toggle('is-view', !!card);
+    cursor.classList.toggle('big', !card && !!e.target.closest('a, button, .char'));
   });
 }
+
+/* header: live section counter + local time in India */
+const secNum = $('.sec-num'), secName = $('.sec-name'), timeEl = $('.clock .time');
+$('.sec-of').textContent = '/ ' + String(layers.length).padStart(2, '0');
+function setSection(i) {
+  const s = document.createElement('span');
+  s.textContent = String(i + 1).padStart(2, '0');
+  secNum.replaceChildren(s);
+  secName.textContent = layers[i].dataset.name;
+}
+const clockFmt = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+const tick = () => { timeEl.textContent = clockFmt.format(new Date()).toUpperCase(); };
+tick();
+setInterval(tick, 15000);
+$('.brand').addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
 const motionBtn = $('.motion-toggle');
 motionBtn.addEventListener('click', () => {
   reduceMotion = !reduceMotion;
@@ -671,7 +680,15 @@ addEventListener('resize', () => {
   }, 150);
 });
 
+/* preloader: count 0 → 100, then the curtain lifts (CSS) */
 const intro = $('.intro');
+const introCount = $('.intro-count');
+const introStart = performance.now();
+(function count(now) {
+  const p = clamp((now - introStart) / 1100, 0, 1);
+  introCount.textContent = Math.round(easeInOut(p) * 100);
+  if (p < 1) requestAnimationFrame(count);
+})(introStart);
 intro.addEventListener('animationend', e => { if (e.animationName === 'lift') intro.remove(); });
 
 /* ---------------- main loop ---------------- */
@@ -709,7 +726,7 @@ function frame(now) {
 
   // pink/cyan colour split on big headings while scrolling fast
   // (desktop only: on phones this restyles the whole page every frame)
-  const split = isTouch ? 0 : clamp(v * .035, -9, 9);
+  const split = isTouch ? 0 : clamp(v * .025, -6, 6);
   if (Math.abs(split - S.split) > .15 || (split === 0 && S.split !== 0)) {
     S.split = split;
     document.documentElement.style.setProperty('--split', split.toFixed(2) + 'px');
@@ -729,6 +746,10 @@ function frame(now) {
     // decode the labels each time a sheet arrives
     if (s.enter > .35 && !l._scr) { l._scr = true; l._labels.forEach(scramble); }
     else if (s.enter < .05 && i > 0) l._scr = false;
+
+    // .in = headings in this sheet slide up into view (with a little hysteresis)
+    if (s.enter > .6 && !l._in) { l._in = true; l.classList.add('in'); }
+    else if (s.enter < .3 && l._in) { l._in = false; l.classList.remove('in'); }
 
     const visible = s.enter > 0 && cover < 1;
     if (visible !== l._vis) { l.style.visibility = visible ? 'visible' : 'hidden'; l._vis = visible; }
@@ -794,6 +815,7 @@ function frame(now) {
 
   if (active !== activeIdx) {
     dots.forEach((d, i) => d.classList.toggle('on', i === active));
+    setSection(active);
     activeIdx = active;
   }
   setStyle(progress, 'transform', `scaleX(${(S.max ? y / S.max : 0).toFixed(4)})`);

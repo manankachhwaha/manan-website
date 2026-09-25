@@ -3,23 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manan — Scroll Playground</title>
+  <title>Manan Kachhwaha — Portfolio</title>
   <meta name="description" content="A playful, animated personal site. Scroll to pull the cloth.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='42' fill='%23ff5b3a'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- Intro curtain -->
-  <div class="intro" aria-hidden="true"><span>hello ✦</span></div>
+  <div class="intro" aria-hidden="true"><span class="intro-name">Manan <em>Kachhwaha</em></span><span class="intro-tag">Portfolio — 2026</span><span class="intro-count">0</span><i class="intro-line"></i></div>
 
   <!-- Global UI -->
   <div class="progress" aria-hidden="true"><span></span></div>
+  <header class="topbar">
+    <a class="brand" href="#">Manan <em>Kachhwaha</em></a>
+    <div class="sec" aria-hidden="true"><span class="sec-num"><span>01</span></span><span class="sec-of">/ 08</span><span class="sec-name">Hello</span></div>
+    <div class="tb-right"><div class="clock"><i></i>India <span class="time">--:--</span></div><button class="motion-toggle" aria-pressed="false">Motion: on</button></div>
+  </header>
   <nav class="dots" aria-label="Sections"></nav>
-  <button class="motion-toggle" aria-pressed="false">Motion: on</button>
   <div class="cursor" aria-hidden="true"></div>
   <div class="cursor-dot" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
@@ -42,6 +46,7 @@
           <h1 class="split">Manan</h1>
           <p class="rotator">I make things that <span class="rot-word">move</span></p>
           <div class="scroll-cue"><span>scroll</span><i></i></div>
+          <div class="hero-meta"><span>Portfolio — ’26</span><span>Based in India</span></div>
         </div>
       </div>
     </section>
@@ -50,9 +55,9 @@
     <section class="layer" id="marquee" data-edge="#ff5b3a" data-hold="0.7" data-name="Feel">
       <div class="sheet">
         <div class="content">
-          <div class="row" data-dir="1"><div class="track">SCROLL ✦ FEEL ✦ PLAY ✦ </div></div>
-          <div class="row band" data-dir="-1"><div class="track">MOTION ● COLOR ● WONDER ● </div></div>
-          <div class="row outline" data-dir="1"><div class="track">PULL THE CLOTH ✺ </div></div>
+          <div class="row" data-dir="1"><div class="track">SCROLL <em>&amp; feel</em> ✦ PLAY ✦ </div></div>
+          <div class="row band" data-dir="-1"><div class="track">MOTION ● <em>colour</em> ● WONDER ● </div></div>
+          <div class="row outline" data-dir="1"><div class="track">PULL THE <em>cloth</em> ✺ </div></div>
         </div>
       </div>
     </section>
@@ -78,7 +83,7 @@
         <div class="content">
           <header class="g-head">
             <p class="label">( selected play )</p>
-            <h2>Things I've made</h2>
+            <h2 class="mask">Things I've <em>made</em></h2>
           </header>
           <div class="g-track">
             <article class="card" style="--c1:#ff7ad9;--c2:#2b1bff"><div class="art art-1"></div><div class="meta"><span>01</span><h3>Aurora</h3><p>Generative light study</p></div></article>
@@ -97,7 +102,7 @@
       <div class="sheet">
         <div class="content">
           <div class="ring" data-items="Design,Code,Music,Coffee,Travel,Film,Typography,Color,Games,Books,Night walks,Sunsets">
-            <h2 class="orbit-title">things<br>I love</h2>
+            <h2 class="orbit-title">things<br><em>I love</em></h2>
           </div>
         </div>
       </div>
@@ -108,7 +113,7 @@
       <div class="sheet">
         <div class="content">
           <canvas data-text="MANAN"></canvas>
-          <p class="label p-caption">( scattered pieces, coming together )</p>
+          <p class="label p-caption mask">( scattered pieces, coming together )</p>
         </div>
       </div>
     </section>
@@ -118,7 +123,7 @@
       <div class="sheet">
         <div class="content">
           <canvas class="rings"></canvas>
-          <h2 class="tunnel-text">going deeper</h2>
+          <h2 class="tunnel-text"><span>going <em>deeper</em></span></h2>
         </div>
       </div>
     </section>
@@ -129,14 +134,14 @@
         <div class="aurora"></div>
         <div class="content">
           <p class="label">( that's the end — or the start )</p>
-          <h2 class="wave">Let's make something move.</h2>
+          <h2 class="wave">Let's make something *move.*</h2>
           <a class="magnet" href="https://wa.me/918769643836" target="_blank" rel="noopener"><span class="goo" aria-hidden="true"><i class="goo-core"></i><i class="drop" style="--k:0"></i><i class="drop" style="--k:1"></i><i class="drop" style="--k:2"></i><i class="drop" style="--k:3"></i><i class="drop" style="--k:4"></i></span><span class="lab">Say hello</span></a>
           <ul class="socials">
             <li><a href="https://www.instagram.com/manan_kachhwaha/" target="_blank" rel="noopener">Instagram</a></li>
             <li><a href="https://www.linkedin.com/in/manankachhwaha/" target="_blank" rel="noopener">LinkedIn</a></li>
             <li><a href="https://wa.me/918769643836" target="_blank" rel="noopener">WhatsApp</a></li>
           </ul>
-          <p class="foot">© Manan — made with way too many animations</p>
+          <p class="foot">© 2026 Manan Kachhwaha — made with way too many animations</p>
         </div>
       </div>
     </section>
