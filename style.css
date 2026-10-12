@@ -750,3 +750,125 @@ html.calm *, html.calm *::before, html.calm *::after {
   animation-duration: .01ms !important;
   animation-iteration-count: 1 !important;
 }
+
+/* =========================================================
+   ADDITIONS: depth decor, new section details, performance
+   ========================================================= */
+
+/* ---- depth decor on every sheet ---- */
+.ghost {
+  position: absolute; right: 2vw; top: 9vh;
+  font: 800 clamp(9rem, 34vw, 30rem)/.8 var(--display);
+  letter-spacing: -.06em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+  opacity: .09;
+  pointer-events: none;
+  will-change: transform;
+}
+.shapes { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.sh { position: absolute; opacity: .32; will-change: transform; }
+.sh.hoop { border: 2px solid currentColor; border-radius: 50%; }
+.sh.dot  { background: currentColor; border-radius: 50%; }
+.sh.sq   { border: 2px solid currentColor; border-radius: 4px; }
+.sh.tri  { background: currentColor; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.sh.plus {
+  background:
+    linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat;
+}
+
+/* ---- marquee sticker ---- */
+.sticker {
+  position: absolute; right: max(16px, 6vw); top: 14vh;
+  width: clamp(92px, 14vw, 190px);
+  fill: var(--ink);
+  font: 800 30px var(--display);
+  will-change: transform;
+  z-index: 2;
+}
+.sticker polygon { fill: var(--yellow); stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+.sticker text { fill: var(--ink); }
+.sticker .it { font: italic 400 34px var(--serif); }
+
+/* ---- manifesto: accent words underline themselves ---- */
+.w.hl { position: relative; }
+.w.hl::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: .02em; height: .06em;
+  background: currentColor; border-radius: 2px;
+  transform: scaleX(var(--u, 0)); transform-origin: left;
+}
+
+/* ---- gallery: counter + progress ---- */
+.g-count {
+  position: absolute; left: max(16px, 8vw); bottom: calc(3.2vh + 12px);
+  font: 500 .72rem/1 var(--body); letter-spacing: .22em; opacity: .6;
+  font-variant-numeric: tabular-nums;
+}
+.g-bar {
+  position: absolute; left: max(16px, 8vw); right: max(16px, 8vw); bottom: 3.2vh;
+  height: 2px; background: rgba(255, 255, 255, .15);
+}
+.g-bar i { display: block; height: 100%; background: var(--orange); transform-origin: 0 50%; transform: scaleX(0); }
+.card .meta h3 { transition: transform .5s var(--ease); }
+.card:hover .meta h3 { transform: translateX(8px); }
+
+/* ---- orbit: slow dashed rings behind the pills ---- */
+.o-ring {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--d); height: var(--d);
+  margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+  border-radius: 50%;
+  border: 1px dashed rgba(244, 239, 230, .28);
+  pointer-events: none;
+  animation: spin 50s linear infinite;
+}
+.o-ring.r1 { --d: min(46vmax, 760px); }
+.o-ring.r2 { --d: min(30vmax, 480px); animation-direction: reverse; animation-duration: 36s; border-style: dotted; }
+
+/* ---- confetti ---- */
+.confetti {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100vh; height: 100lvh;
+  z-index: 96; pointer-events: none;
+}
+
+/* ---- small refinements ---- */
+.socials a { display: inline-block; transition: transform .4s var(--ease); }
+.socials a:hover { transform: translateY(-4px) rotate(-3deg); }
+.magnet:active { scale: .94; transition: scale .15s; }
+.dots button:active { transform: scaleX(1.4); }
+
+/* ---- performance: pause animations on sheets that are off-screen ---- */
+.layer.off, .layer.off *, .layer.off *::before, .layer.off *::after { animation-play-state: paused !important; }
+
+/* ---- no full-screen blend modes on phones (or once the governor trips): the UI recolours per sheet instead ---- */
+html.flat .topbar, html.flat .progress, html.flat .dots, html.flat .fx { mix-blend-mode: normal; }
+html.flat .topbar { transition: color .4s; }
+html.flat.ui-ink .topbar { color: var(--ink); }
+html.flat.ui-ink .progress span,
+html.flat.ui-ink .dots button,
+html.flat.ui-ink .clock i { background: var(--ink); }
+html.flat.ui-ink .motion-toggle { color: var(--ink); border-color: rgba(13, 11, 30, .5); }
+
+/* ---- governor tier 1: shed the heaviest decoration ---- */
+html.q1 .grain { display: none; }
+html.q1 .blob { animation: none; }
+html.q1 .goo { filter: none; }
+html.q1 .drop { display: none; }
+html.q1 .aurora { animation-duration: 60s; }
+/* ---- tier 2: bare essentials ---- */
+html.q2 .shapes, html.q2 .ghost, html.q2 .o-ring { display: none; }
+html.q2 .wave .char > span { animation: none; }
+
+/* ---- phones ---- */
+@media (hover: none), (pointer: coarse) {
+  .aurora { width: 110vmax; height: 110vmax; margin: -55vmax 0 0 -55vmax; } /* smaller layer to spin */
+  .ghost { -webkit-text-stroke-width: 1px; }
+  .sh { opacity: .26; }
+  .o-ring { animation-duration: 80s; }
+}
+@media (max-width: 600px) {
+  .sticker { top: 12vh; width: 92px; }
+  .g-count { bottom: calc(3.2vh + 10px); }
+}
