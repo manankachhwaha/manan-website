@@ -122,7 +122,7 @@ $$('.mask').forEach(el => { el.innerHTML = `<span class="mask-in">${el.innerHTML
 /* Depth decor on every sheet: a giant outlined section number + drifting shapes at different depths.
    They are plain transform-only elements, so the GPU moves them for free. */
 const SHAPE_TYPES = ['hoop', 'dot', 'plus', 'tri', 'sq'];
-const SHAPE_COUNT = isTouch ? 4 : 7;
+const SHAPE_COUNT = isTouch ? 3 : 7;
 layers.forEach((l, li) => {
   l._labels = $$('.label:not(.mask)', l);
   l._sheet = $('.sheet', l);
@@ -144,7 +144,7 @@ layers.forEach((l, li) => {
     const type = SHAPE_TYPES[(k + li) % SHAPE_TYPES.length];
     el.className = 'sh ' + type;
     const size = 14 + ((k * 37 + li * 11) % 5) * 9;
-    el.style.cssText = `left:${(8 + ((k * 53 + li * 29) % 84))}%;top:${(10 + ((k * 31 + li * 47) % 76))}%;width:${size}px;height:${size}px`;
+    el.style.cssText = `left:${(8 + ((k * 53 + li * 29) % 84))}%;top:${(10 + ((k * 31 + li * 47) % 76))}%;width:${size}px;height:${size}px;--k:${k}`;
     if (!LIGHT.has(l.id) && k % 2 === 0) el.style.color = PALETTE[(k + li) % 4];
     box.appendChild(el);
     l._shapes.push({ el, depth: .25 + ((k * 17 + li * 7) % 10) / 10 * 1.1, spin: ((k % 2) * 2 - 1) * (10 + (k * 13) % 30), ph: k * 1.7 });
@@ -155,6 +155,7 @@ layers.forEach((l, li) => {
 });
 
 function decorUpdate(l, s, v) {
+  if (isTouch) return; // phones: static numeral, shapes float via CSS
   const vh = S.vh, t = S.time;
   // scrolling drags the numeral and shapes at different speeds → depth
   const base = -s.hold * vh * .25 + (1 - s.enter) * vh * .35;
@@ -266,7 +267,7 @@ modules.marquee = {
     this.rows.forEach(r => {
       r.off += r.dir * this.sign * (70 + Math.abs(v) * 5) * S.dt;
       const x = -(((r.off % r.unit) + r.unit) % r.unit);
-      r.track.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`;
+      r.track.style.transform = `translate3d(${x.toFixed(1)}px,0,0) skewX(${clamp(-v * .06, -12, 12).toFixed(2)}deg)`;
     });
     // starburst sticker: spins with the scroll, pops in as the sheet lands, wobbles when you scroll fast
     const pop = easeOut(clamp(s.enter * 1.3 - .3, 0, 1));
@@ -318,6 +319,7 @@ modules.gallery = {
         const r = c.el.getBoundingClientRect();
         c.tx = (e.clientX - r.left) / r.width - .5;
         c.ty = (e.clientY - r.top) / r.height - .5;
+        if (!c.over) scramble($('h3', c.el));
         c.over = true;
         c.el.style.setProperty('--gx', ((c.tx + .5) * 100).toFixed(1) + '%');
         c.el.style.setProperty('--gy', ((c.ty + .5) * 100).toFixed(1) + '%');
@@ -346,7 +348,8 @@ modules.gallery = {
       c.hs = lerp(c.hs, c.over ? 1 : 0, .12);
       // cards drop in one after another while the sheet lifts, and fan out slightly at the edges
       const drop = (1 - easeOut(clamp(s.enter * 1.5 - i * .09, 0, 1))) * S.vh * .35;
-      setStyle(c.el, 'transform',
+      if (isTouch) setStyle(c.el, 'transform', `translate3d(0,${(Math.abs(d) * 24 + drop).toFixed(1)}px,0)`);
+      else setStyle(c.el, 'transform',
         `translateY(${(Math.abs(d) * 24 - c.hs * 14 + drop).toFixed(1)}px) scale(${(1 + c.hs * .04).toFixed(3)}) ` +
         `rotate(${(d * 5 + (1 - clamp(s.enter * 1.5 - i * .09, 0, 1)) * 8).toFixed(2)}deg) ` +
         `rotateY(${(this.rot - d * 10 + c.hx * 18).toFixed(2)}deg) rotateX(${(-c.hy * 18).toFixed(2)}deg)`);
@@ -510,6 +513,8 @@ modules.tunnel = {
     // fixed angles for the speed streaks that fly out of the centre when you scroll fast
     this.rays = Array.from({ length: 26 }, (_, i) => ({ a: (i / 26) * Math.PI * 2 + Math.random() * .2, r: .3 + Math.random() * .7 }));
     this.text = $('.tunnel-text', l);
+    $('span', this.text).textContent = 'going *deeper*';
+    this.chars = splitText($('span', this.text));
     this.spin = 0;
   },
   layout() {
@@ -559,8 +564,13 @@ modules.tunnel = {
       ctx.restore();
     }
     const tp = easeOut(clamp(s.hold * 1.6 - .2, 0, 1));
-    setStyle(this.text, 'transform', `scale(${(.4 + tp * .6).toFixed(3)})`);
-    setStyle(this.text, 'opacity', tp.toFixed(3));
+    setStyle(this.text, 'transform', `scale(${(.7 + tp * .3).toFixed(3)})`);
+    setStyle(this.text, 'opacity', '1');
+    this.chars.forEach((c, i) => {
+      const q = easeOut(clamp(tp * 1.7 - i * .07, 0, 1));
+      setStyle(c, 'transform', `translate3d(0,${((1 - q) * 80).toFixed(1)}%,0) rotate(${((1 - q) * (i % 2 ? 16 : -16)).toFixed(1)}deg) scale(${(.6 + q * .4).toFixed(3)})`);
+      setStyle(c, 'opacity', q.toFixed(2));
+    });
   },
 };
 
@@ -608,7 +618,7 @@ if (isTouch) {
 
 /* ---------------- fluid ink (lives behind the hero and the contact section) ---------------- */
 const fluidCv = $('.fluid');
-let fluidOn = Fluid.init(fluidCv);
+let fluidOn = isTouch ? false : Fluid.init(fluidCv);
 if (!fluidOn) fluidCv.remove();
 const FLUID_COLORS = [[1, .36, .23], [1, .48, .85], [.25, .18, 1], [.31, 1, .69], [1, .82, .25]].map(c => c.map(x => x * .2));
 const fl = { lx: null, ly: null, auto: .3, ct: 0, color: FLUID_COLORS[0], home: null, activeNow: false };
@@ -730,6 +740,7 @@ function drawFx(dt) {
     fx.lx = mouse.x; fx.ly = mouse.y;
   }
   const empty = !fx.trail.length && !fx.sparks.length && !fx.rings.length;
+  setStyle(fx.cv, 'visibility', empty ? 'hidden' : 'visible');
   if (empty && fx.clean) return; // nothing to draw: skip the full-screen clear
   const ctx = fx.ctx;
   ctx.setTransform(fx.dpr, 0, 0, fx.dpr, 0, 0);
@@ -787,6 +798,7 @@ function confettiBurst(x, y, n) {
   cf.ps = cf.ps.slice(-120);
 }
 function drawConfetti(dt) {
+  setStyle(cf.cv, 'visibility', cf.ps.length ? 'visible' : 'hidden');
   if (!cf.ps.length) {
     if (!cf.clean) { cf.ctx.clearRect(0, 0, S.vw, S.vh); cf.clean = true; }
     return;
@@ -874,6 +886,34 @@ const introStart = performance.now();
 })(introStart);
 intro.addEventListener('animationend', e => { if (e.animationName === 'lift') intro.remove(); });
 
+/* every time a sheet lands: a coloured light sweeps across the screen and the big type glitches for a beat */
+const sweepEl = $('.sweep');
+arrive.n = 0;
+function arrive(l, i) {
+  if (!i || reduceMotion) return;
+  sweepEl.style.setProperty('--sc', PALETTE[i % 4]);
+  arrive.n ^= 1;
+  sweepEl.classList.remove('goA', 'goB');
+  sweepEl.classList.add(arrive.n ? 'goA' : 'goB');
+  l.classList.remove('glitchA', 'glitchB');
+  l.classList.add(arrive.n ? 'glitchA' : 'glitchB');
+  clearTimeout(l._gt);
+  l._gt = setTimeout(() => l.classList.remove('glitchA', 'glitchB'), 600);
+}
+
+/* magnetic links (desktop): the element leans towards the pointer when it gets close */
+const mags = isTouch ? [] : $$('.socials a, .brand, .motion-toggle').map(el => ({ el, x: 0, y: 0, tx: 0, ty: 0 }));
+if (mags.length) addEventListener('pointermove', e => {
+  for (const m of mags) {
+    const r = m.el.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - m.x, cy = r.top + r.height / 2 - m.y;
+    const near = Math.hypot(e.clientX - cx, e.clientY - cy) < 90 + r.width * .3;
+    m.tx = near ? (e.clientX - cx) * .35 : 0;
+    m.ty = near ? (e.clientY - cy) * .35 : 0;
+  }
+}, { passive: true });
+const spot = $('.spot');
+
 /* ---------------- quality governor ---------------- */
 function setTier(t) {
   Q.tier = t;
@@ -886,7 +926,7 @@ function setTier(t) {
 function govern(rawDt, now) {
   if (now < 4500 || document.hidden || reduceMotion || rawDt > .25) return; // skip intro + tab switches
   Q.acc += rawDt;
-  if (++Q.n < 90) return;
+  if (++Q.n < (isTouch ? 60 : 90)) return;
   const avg = Q.acc / Q.n;
   Q.acc = Q.n = 0;
   if (avg > 1 / 40) { if (++Q.bad >= 2 && Q.tier < 2) { Q.bad = 0; setTier(Q.tier + 1); } }
@@ -956,7 +996,7 @@ function frame(now) {
     else if (s.enter < .05 && i > 0) l._scr = false;
 
     // .in = headings in this sheet slide up into view (with a little hysteresis)
-    if (s.enter > .6 && !l._in) { l._in = true; l.classList.add('in'); }
+    if (s.enter > .6 && !l._in) { l._in = true; l.classList.add('in'); arrive(l, i); }
     else if (s.enter < .3 && l._in) { l._in = false; l.classList.remove('in'); }
 
     const visible = s.enter > 0 && cover < 1;
@@ -1040,6 +1080,11 @@ function frame(now) {
     mouse.ry = lerp(mouse.ry, mouse.y, .18);
     setStyle(cursor, 'transform', `translate3d(${mouse.rx.toFixed(1)}px,${mouse.ry.toFixed(1)}px,0)`);
     setStyle(cursorDot, 'transform', `translate3d(${mouse.x}px,${mouse.y}px,0)`);
+    setStyle(spot, 'transform', `translate3d(${(mouse.rx - 300).toFixed(1)}px,${(mouse.ry - 300).toFixed(1)}px,0)`);
+    for (const m of mags) {
+      m.x = lerp(m.x, m.tx, .15); m.y = lerp(m.y, m.ty, .15);
+      setStyle(m.el, 'translate', `${m.x.toFixed(1)}px ${m.y.toFixed(1)}px`);
+    }
   }
 
   drawFx(dt);

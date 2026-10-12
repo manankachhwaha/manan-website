@@ -872,3 +872,107 @@ html.q2 .wave .char > span { animation: none; }
   .sticker { top: 12vh; width: 92px; }
   .g-count { bottom: calc(3.2vh + 10px); }
 }
+
+/* =========================================================
+   ROUND 3: arrival sweep + glitch, spotlight, sheen, orb, bands
+   ========================================================= */
+.sweep {
+  position: fixed; top: 0; bottom: 0; left: 0; width: 55vw;
+  z-index: 97; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--sc, #fff) 50%, transparent);
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0) skewX(-18deg);
+}
+.sweep.goA { animation: sweepA .95s cubic-bezier(.65, 0, .35, 1); }
+.sweep.goB { animation: sweepB .95s cubic-bezier(.65, 0, .35, 1); }
+@keyframes sweepA {
+  0%   { opacity: 0;   transform: translate3d(-100%, 0, 0) skewX(-18deg); }
+  15%  { opacity: .5; }
+  100% { opacity: 0;   transform: translate3d(200%, 0, 0) skewX(-18deg); }
+}
+@keyframes sweepB {
+  0%   { opacity: 0;   transform: translate3d(-100%, 0, 0) skewX(-18deg); }
+  15%  { opacity: .5; }
+  100% { opacity: 0;   transform: translate3d(200%, 0, 0) skewX(-18deg); }
+}
+
+.layer.glitchA .g-head h2, .layer.glitchA .wave, .layer.glitchA .words { animation: glitchA .5s steps(1) 1; }
+.layer.glitchB .g-head h2, .layer.glitchB .wave, .layer.glitchB .words { animation: glitchB .5s steps(1) 1; }
+@keyframes glitchA {
+  0%   { transform: translate3d(-8px, 0, 0) skewX(10deg); }
+  20%  { transform: translate3d(10px, 0, 0) skewX(-12deg); }
+  40%  { transform: translate3d(-4px, 0, 0); }
+  60%  { transform: translate3d(6px, 0, 0) skewX(6deg); }
+  80%  { transform: translate3d(-2px, 0, 0); }
+  100% { transform: none; }
+}
+@keyframes glitchB {
+  0%   { transform: translate3d(-8px, 0, 0) skewX(10deg); }
+  20%  { transform: translate3d(10px, 0, 0) skewX(-12deg); }
+  40%  { transform: translate3d(-4px, 0, 0); }
+  60%  { transform: translate3d(6px, 0, 0) skewX(6deg); }
+  80%  { transform: translate3d(-2px, 0, 0); }
+  100% { transform: none; }
+}
+
+.spot {
+  position: fixed; left: 0; top: 0; width: 600px; height: 600px;
+  z-index: 80; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .1), transparent 65%);
+  will-change: transform;
+}
+
+.sheen {
+  position: absolute; top: -20%; bottom: -20%; left: -30vw; width: 16vw;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .12), transparent);
+  transform: translate3d(0, 0, 0) skewX(-20deg);
+  animation: sheen 7s ease-in-out 3.5s infinite;
+  will-change: transform;
+}
+@keyframes sheen { 0% { transform: translate3d(0, 0, 0) skewX(-20deg); } 35%, 100% { transform: translate3d(190vw, 0, 0) skewX(-20deg); } }
+
+.o-orb {
+  position: absolute; left: 50%; top: 50%;
+  width: 50vmin; height: 50vmin; margin: -25vmin 0 0 -25vmin;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 122, 217, .55), rgba(255, 122, 217, 0) 68%);
+  animation: orb 4.5s ease-in-out infinite;
+}
+@keyframes orb { 50% { transform: scale(1.35); opacity: .6; } }
+
+.c-band { position: absolute; left: 0; right: 0; top: 13vh; overflow: hidden; pointer-events: none; opacity: .5; }
+.c-row { display: flex; width: max-content; animation: band 30s linear infinite; will-change: transform; }
+.c-row span {
+  white-space: nowrap; padding-right: .3em;
+  font: 800 clamp(3rem, 9vw, 8rem)/1 var(--display); letter-spacing: -.02em;
+  color: transparent; -webkit-text-stroke: 1.5px rgba(244, 239, 230, .55);
+}
+@keyframes band { to { transform: translate3d(-50%, 0, 0); } }
+
+.socials a { transition: color .3s; }
+.socials a:hover { transform: none; }
+
+html.q2 .spot, html.q2 .sheen, html.q2 .c-band, html.q2 .o-orb { display: none; }
+html.q1 .sheen { animation: none; }
+@media (hover: none), (pointer: coarse) { .spot { display: none; } .c-row { animation-duration: 45s; } }
+
+/* =========================================================
+   iPHONE / TOUCH: keep the GPU doing only cheap things
+   ========================================================= */
+.confetti, .fx { visibility: hidden; }
+@keyframes shfloat { to { transform: translate3d(0, -22px, 0) rotate(50deg); } }
+@media (hover: none), (pointer: coarse) {
+  .art-1::before { filter: none; }                 /* animated 30px blur = very expensive on Safari */
+  .card::after { display: none; }                  /* hover glare, never used on touch */
+  .drape { display: none; }                        /* only ever drawn on desktop */
+  .w, .char { will-change: auto; }                 /* dozens of tiny GPU layers add up fast */
+  .split .char { will-change: transform; }
+  .badge { will-change: transform; }               /* rotating SVG text: raster once, spin on the GPU */
+  .o-ring, .o-orb { animation: none; }
+  .sh { animation: shfloat 8s ease-in-out infinite alternate; animation-delay: calc(var(--k, 0) * -1.3s); }
+  .sheen { display: none; }
+  @keyframes lift {                                /* curtain: transform only, no animated border-radius */
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-110%); }
+  }
+}
